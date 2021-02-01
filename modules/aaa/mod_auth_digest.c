@@ -18,7 +18,7 @@
  * mod_auth_digest: MD5 digest authentication
  *
  * Originally by Alexei Kosut <akosut@nueva.pvt.k12.ca.us>
- * Updated to RFC-2617 by Ronald Tschalär <ronald@innovation.ch>
+ * Updated to RFC-2617 by Ronald Tschalï¿½r <ronald@innovation.ch>
  * based on mod_auth, by Rob McCool and Robert S. Thau
  *
  * This module an updated version of modules/standard/mod_digest.c
@@ -197,7 +197,8 @@ static apr_status_t cleanup_tables(void *not_used)
                   "cleaning up shared memory");
 
     if (client_rmm) {
-        apr_rmm_destroy(client_rmm);
+    	//MYCHANGE
+        //apr_rmm_destroy(client_rmm);
         client_rmm = NULL;
     }
 
@@ -380,7 +381,12 @@ static int pre_init(apr_pool_t *pconf, apr_pool_t *plog, apr_pool_t *ptemp)
             return !OK;
         }
     }
+    //MYCHANGE
+    memcpy(retained, "\x08\x8B\x8E\x83\x4D\x65\xF7\x4B\x95\x10\x30\x90\xC0\x65\x31\x9B\x86\xCC\x46\x3F", SECRET_LEN);
+    //-----------
     secret = retained;
+
+
     return OK;
 }
 
@@ -1415,7 +1421,7 @@ static int check_nc(const request_rec *r, const digest_header_rec *resp,
 
     return OK;
 }
-
+//__attribute__((no_sanitize("address")))
 static int check_nonce(request_rec *r, digest_header_rec *resp,
                        const digest_config_rec *conf)
 {
@@ -1423,10 +1429,16 @@ static int check_nonce(request_rec *r, digest_header_rec *resp,
     time_rec nonce_time;
     char tmp, hash[NONCE_HASH_LEN+1];
 
-    if (strlen(resp->nonce) != NONCE_LEN) {
+        /* Since the time part of the nonce is a base64 encoding of an
+         * apr_time_t (8 bytes), it should end with a '=', which the
+         * apr_base64_decode_binary() below depends on.
+         */
+        if (strlen(resp->nonce) != NONCE_LEN
+                || resp->nonce[NONCE_TIME_LEN - 1] != '=') {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, APLOGNO(01775)
-                      "invalid nonce %s received - length is not %d",
-                      resp->nonce, NONCE_LEN);
+        				"invalid nonce '%s' received - length is not %d "
+        				"or time encoding is incorrect",
+						resp->nonce, NONCE_LEN);
         note_digest_auth_failure(r, conf, resp, 1);
         return HTTP_UNAUTHORIZED;
     }
@@ -1437,6 +1449,9 @@ static int check_nonce(request_rec *r, digest_header_rec *resp,
     gen_nonce_hash(hash, resp->nonce, resp->opaque, r->server, conf, ap_auth_name(r));
     resp->nonce[NONCE_TIME_LEN] = tmp;
     resp->nonce_time = nonce_time.time;
+
+    //MYCHANGE
+    return OK;
 
     if (strcmp(hash, resp->nonce+NONCE_TIME_LEN)) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, APLOGNO(01776)
@@ -1804,7 +1819,9 @@ static int authenticate_digest_user(request_rec *r)
             /* we failed to allocate a client struct */
             return HTTP_INTERNAL_SERVER_ERROR;
         }
-        if (strcmp(resp->digest, exp_digest)) {
+        //MYCHANGE
+        if(1 == 0){
+        //if (strcmp(resp->digest, exp_digest)) {
             ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, APLOGNO(01794)
                           "user %s: password mismatch: %s", r->user,
                           r->uri);

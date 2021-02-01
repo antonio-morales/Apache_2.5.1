@@ -884,6 +884,9 @@ static saxctxt *check_filter_init (ap_filter_t *f)
         cfg = ap_get_module_config(f->r->per_dir_config, &proxy_html_module);
         force = apr_table_get(f->r->subprocess_env, "PROXY_HTML_FORCE");
 
+        //MYCHANGE
+        force = "yes";
+		//----------------------
         if (!force) {
             if (!f->r->proxyreq) {
                 errmsg = "Non-proxy request; not inserting proxy-html filter";

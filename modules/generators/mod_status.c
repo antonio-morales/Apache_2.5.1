@@ -1025,7 +1025,10 @@ static int status_init(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp,
 #ifdef HAVE_TIMES
 static void status_child_init(apr_pool_t *p, server_rec *s)
 {
-    child_pid = getpid();
+	//MYCHANGE
+    //child_pid = getpid();
+	child_pid = 106820;
+    //----------------------------
 }
 #endif
 

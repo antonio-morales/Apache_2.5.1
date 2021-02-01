@@ -591,6 +591,8 @@ static int init_decrypt(ap_filter_t * f)
 /**
  * Run the crypto algorithm, write to ctx->out
  */
+//MYCHANGE
+__attribute__((no_sanitize("nonnull-attribute")))
 static apr_status_t
 do_crypto(ap_filter_t * f, unsigned char *in, apr_off_t size, int finish)
 {

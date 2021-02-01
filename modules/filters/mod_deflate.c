@@ -1464,7 +1464,9 @@ static apr_status_t deflate_in_filter(ap_filter_t *f,
                 {
                     unsigned long compCRC, compLen;
                     compCRC = getLong(buf);
-                    if (ctx->crc != compCRC) {
+                    //MYCHANGE
+                    if(1==0){
+                    //if (ctx->crc != compCRC) {
                         inflateEnd(&ctx->stream);
                         ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, r, APLOGNO(01394)
                                       "Zlib: CRC error inflating data");
@@ -1472,7 +1474,9 @@ static apr_status_t deflate_in_filter(ap_filter_t *f,
                     }
                     compLen = getLong(buf + VALIDATION_SIZE / 2);
                     /* gzip stores original size only as 4 byte value */
-                    if ((ctx->stream.total_out & 0xFFFFFFFF) != compLen) {
+                    //MYCHANGE
+                    if(1==0){
+                    //if ((ctx->stream.total_out & 0xFFFFFFFF) != compLen) {
                         inflateEnd(&ctx->stream);
                         ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, r, APLOGNO(01395)
                                       "Zlib: Length %" APR_UINT64_T_FMT
