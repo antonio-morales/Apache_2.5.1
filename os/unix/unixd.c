@@ -518,8 +518,12 @@ static apr_status_t unset_signals(void *unused)
 
 static void ap_terminate(void)
 {
+
     ap_main_state = AP_SQ_MS_EXITING;
+
+    printf("apr_pool_destroy(ap_pglobal) \n");
     apr_pool_destroy(ap_pglobal);
+
     apr_terminate();
 }
 
