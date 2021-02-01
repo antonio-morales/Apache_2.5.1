@@ -786,6 +786,8 @@ int ap_signal_server(int *exit_status, apr_pool_t *pconf)
 
     *exit_status = 0;
 
+    //MYCHANGE
+    /*
     rv = ap_read_pid(pconf, ap_pid_fname, &otherpid);
     if (rv != APR_SUCCESS) {
         if (!APR_STATUS_IS_ENOENT(rv)) {
@@ -799,9 +801,9 @@ int ap_signal_server(int *exit_status, apr_pool_t *pconf)
         status = "httpd (no pid file) not running";
     }
     else {
-        /* With containerization, httpd may get the same PID at each startup,
-         * handle it as if it were not running (it obviously can't).
-         */
+        // With containerization, httpd may get the same PID at each startup,
+        // handle it as if it were not running (it obviously can't).
+         //
         if (otherpid != getpid() && kill(otherpid, 0) == 0) {
             running = 1;
             status = apr_psprintf(pconf,
@@ -814,7 +816,8 @@ int ap_signal_server(int *exit_status, apr_pool_t *pconf)
                                   otherpid);
         }
     }
-
+*/
+    //---------------------------------------------------------------------
     if (!strcmp(dash_k_arg, "start") || dash_k_arg == dash_k_arg_noarg) {
         if (running) {
             printf("%s\n", status);
@@ -1006,7 +1009,10 @@ static void sig_coredump(int sig)
 
 AP_DECLARE(apr_status_t) ap_fatal_signal_child_setup(server_rec *s)
 {
-    my_pid = getpid();
+	//MYCHANGE
+    //my_pid = getpid();
+	my_pid = 106820;
+    //-----------------
     return APR_SUCCESS;
 }
 

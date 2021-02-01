@@ -2648,9 +2648,12 @@ AP_DECLARE(char *) ap_escape_quotes(apr_pool_t *p, const char *instring)
 AP_DECLARE(char *) ap_append_pid(apr_pool_t *p, const char *string,
                                     const char *delim)
 {
-    return apr_psprintf(p, "%s%s%" APR_PID_T_FMT, string,
-                        delim, getpid());
-
+	//MYCHANGE
+	//return apr_psprintf(p, "%s%s%" APR_PID_T_FMT, string,
+    //                    delim, getpid());
+	return apr_psprintf(p, "%s%s%" APR_PID_T_FMT, string,
+	                        delim, 106820);
+	//--------------------------------------------------
 }
 
 /**

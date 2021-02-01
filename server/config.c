@@ -642,11 +642,14 @@ AP_DECLARE(const char *) ap_add_module(module *m, apr_pool_t *p,
         m->name = tmp;
     }
 #endif /*_OSD_POSIX*/
-
+    //MYCHANGE
+    //if(m->module_index != 38)
     ap_add_module_commands(m, p);
     /*  FIXME: is this the right place to call this?
      *  It doesn't appear to be
      */
+    //MYCHANGE
+    //if(m->module_index != 38)
     ap_register_hooks(m, p);
 
     return NULL;
@@ -1329,6 +1332,7 @@ static const char *ap_walk_config_sub(const ap_directive_t *current,
     }
 
     for ( ; ml != NULL; ml = ml->next) {
+
         void *dir_config = ap_set_config_vectors(parms->server,
                                                  section_vector,
                                                  parms->path,
@@ -1382,7 +1386,6 @@ AP_DECLARE(const char *) ap_walk_config(ap_directive_t *current,
             return errmsg;
         }
     }
-
     parms->context = oldconfig;
     return NULL;
 }
@@ -1976,6 +1979,7 @@ AP_DECLARE(int) ap_process_config_tree(server_rec *s,
     parms.limited = -1;
 
     errmsg = ap_walk_config(conftree, &parms, s->lookup_defaults);
+
     if (errmsg) {
         if (parms.err_directive)
             ap_log_perror(APLOG_MARK, APLOG_STARTUP, 0, p, APLOGNO(00526)

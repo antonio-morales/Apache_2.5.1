@@ -39,6 +39,9 @@
 #include <systemd/sd-daemon.h>
 #endif
 
+#include "fuzzing_aux.h"
+#include "arch/unix/apr_arch_networkio.h"
+
 /* we know core's module_index is 0 */
 #undef APLOG_MODULE_INDEX
 #define APLOG_MODULE_INDEX AP_CORE_MODULE_INDEX
@@ -74,6 +77,13 @@ static int use_systemd = -1;
 /* TODO: make_sock is just begging and screaming for APR abstraction */
 static apr_status_t make_sock(apr_pool_t *p, ap_listen_rec *server, int do_bind_listen)
 {
+
+	//MYCHANGE
+	struct sockaddr_in my_addr;
+	struct sockaddr_in * tmp;
+	int len;
+	//----------------------
+
     apr_socket_t *s = server->sd;
     int one = 1;
 #if APR_HAVE_IPV6
@@ -197,6 +207,11 @@ static apr_status_t make_sock(apr_pool_t *p, ap_listen_rec *server, int do_bind_
         }
 #endif
 
+        //MYCHANGE
+        tmp = (struct sockaddr *)&server->bind_addr->sa;
+        tmp->sin_port = 0;
+        //-----------------
+
         if ((stat = apr_socket_bind(s, server->bind_addr)) != APR_SUCCESS) {
             ap_log_perror(APLOG_MARK, APLOG_STARTUP|APLOG_CRIT, stat, p, APLOGNO(00072)
                           "make_sock: could not bind to address %pI",
@@ -204,6 +219,12 @@ static apr_status_t make_sock(apr_pool_t *p, ap_listen_rec *server, int do_bind_
             apr_socket_close(s);
             return stat;
         }
+
+        //MYCHANGE
+        len = sizeof(my_addr);
+        getsockname(s->socketdes, (struct sockaddr *) &my_addr, &len);
+        currentPort = ntohs(my_addr.sin_port);
+        //---------------------
 
         if ((stat = apr_socket_listen(s, ap_listenbacklog)) != APR_SUCCESS) {
             ap_log_perror(APLOG_MARK, APLOG_STARTUP|APLOG_ERR, stat, p, APLOGNO(00073)

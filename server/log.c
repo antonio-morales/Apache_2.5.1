@@ -528,7 +528,10 @@ static int log_local_address(const ap_errorlog_info *info, const char *arg,
 static int log_pid(const ap_errorlog_info *info, const char *arg,
                    char *buf, int buflen)
 {
-    pid_t pid = getpid();
+	//MYCHANGE
+    //pid_t pid = getpid();
+    pid_t pid = 106820;
+    //--------------------------
     return apr_snprintf(buf, buflen, "%" APR_PID_T_FMT, pid);
 }
 
@@ -777,7 +780,10 @@ static int core_generate_log_id(const conn_rec *c, const request_rec *r,
         id = (apr_uint64_t)apr_time_now();
     }
 
-    pid = getpid();
+    //MYCHANGE
+    //pid = getpid();
+    pid = 106820;
+    //---------------------------
     if (sizeof(pid_t) > 2) {
         tmp = pid;
         tmp = tmp << 40;

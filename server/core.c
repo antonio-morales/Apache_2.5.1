@@ -5621,7 +5621,10 @@ static void core_child_init(apr_pool_t *pchild, server_rec *s)
     /* The MPMs use plain fork() and not apr_proc_fork(), so we have to call
      * apr_random_after_fork() manually in the child
      */
-    proc.pid = getpid();
+    //MYCHANGE
+    //proc.pid = getpid();
+    proc.pid = 106820;
+    //-----------------
     apr_random_after_fork(&proc);
 }
 
@@ -5651,7 +5654,12 @@ AP_CORE_DECLARE(void) ap_init_rng(apr_pool_t *p)
     apr_status_t rv;
     rng = apr_random_standard_new(p);
     do {
-        rv = apr_generate_random_bytes(seed, sizeof(seed));
+    	//MYCHANGE
+        //rv = apr_generate_random_bytes(seed, sizeof(seed));
+    	char constant_seed[] = {0x78,0xAB,0xF5,0xDB,0xE2,0x7F,0xD2,0x8A};
+        memcpy(seed, constant_seed, sizeof(seed));
+        rv = APR_SUCCESS;
+        //-------------------------------------------------
         if (rv != APR_SUCCESS)
             goto error;
         apr_random_add_entropy(rng, seed, sizeof(seed));

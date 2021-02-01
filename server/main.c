@@ -41,6 +41,11 @@
 #include "util_ebcdic.h"
 #include "ap_mpm.h"
 
+#include "fuzzing_aux.h"
+#ifndef MAIN_C
+#define MAIN_C
+#endif
+
 #if APR_HAVE_UNISTD_H
 #include <unistd.h>
 #else
@@ -333,6 +338,7 @@ static process_rec *init_process(int *argc, const char * const * *argv)
         stat = apr_pool_create(&cntx, NULL);
     }
 
+
     if (stat != APR_SUCCESS) {
         /* For all intents and purposes, this is impossibly unlikely,
          * but APR doesn't exist yet, we can't use it for reporting
@@ -356,6 +362,7 @@ static process_rec *init_process(int *argc, const char * const * *argv)
     apr_pool_tag(cntx, "process");
     ap_open_stderr_log(cntx);
 
+
     /* Now we have initialized apr and our logger, no more
      * exceptional error reporting required for the lifetime
      * of this server process.
@@ -367,9 +374,12 @@ static process_rec *init_process(int *argc, const char * const * *argv)
     process->pconf = NULL;
     reset_process_pconf(process);
 
+
     process->argc = *argc;
     process->argv = *argv;
     process->short_name = apr_filepath_name_get((*argv)[0]);
+
+
     return process;
 }
 
@@ -485,33 +495,83 @@ static void usage(process_rec *process)
     destroy_and_exit_process(process, 1);
 }
 
+char *inputFile;
+int fd_inputFile;
+unsigned char filedata[MAX_INPUT_SIZE];
+unsigned int filesize;
+int currentPort;
+int ready_to_fuzz;
+int fuzzingFD;
+
 #ifdef HFND_FUZZING_ENTRY_FUNCTION
  HFND_FUZZING_ENTRY_FUNCTION(int argc, const char *const *argv)
 #else
  int main(int argc, const char *const *argv)
 #endif
 {
-    char c;
-    int showcompile = 0, showdirectives = 0;
-    const char *confname = SERVER_CONFIG_FILE;
-    const char *def_server_root = HTTPD_ROOT;
-    const char *temp_error_log = NULL;
-    const char *error;
-    process_rec *process;
-    apr_pool_t *pconf;
-    apr_pool_t *plog; /* Pool of log streams, reset _after_ each read of conf */
-    apr_pool_t *ptemp; /* Pool for temporary config stuff, reset often */
-    apr_pool_t *pcommands; /* Pool for -D, -C and -c switches */
-    apr_getopt_t *opt;
-    apr_status_t rv;
-    module **mod;
-    const char *opt_arg;
-    APR_OPTIONAL_FN_TYPE(ap_signal_server) *signal_server;
-    int rc = OK;
+
+	    int showcompile = 0, showdirectives = 0;
+	    const char *confname = SERVER_CONFIG_FILE;
+	    const char *def_server_root = HTTPD_ROOT;
+	    const char *temp_error_log = NULL;
+	    const char *error;
+	    process_rec *process;
+	    apr_pool_t *pconf;
+	    apr_pool_t *plog; /* Pool of log streams, reset _after_ each read of conf */
+	    apr_pool_t *ptemp; /* Pool for temporary config stuff, reset often */
+	    apr_pool_t *pcommands; /* Pool for -D, -C and -c switches */
+	    apr_getopt_t *opt;
+	    apr_status_t rv;
+	    module **mod;
+	    const char *opt_arg;
+	    APR_OPTIONAL_FN_TYPE(ap_signal_server) *signal_server;
+	    char c;
+	    int rc = OK;
+
+
+	 //MYCHANGE
+		 char tmpStr[6];
+		 void *tmpptr;
+		 /*
+		  struct rlimit limit;
+
+		  getrlimit (RLIMIT_STACK, &limit);
+		  printf ("\nStack Limit = %ld and %ld max\n", limit.rlim_cur, limit.rlim_max);
+
+		  limit.rlim_cur *= 4;
+
+		  if(setrlimit(RLIMIT_STACK, &limit) != 0)
+			  printf("Error setting new stack limit");
+
+		  getrlimit (RLIMIT_STACK, &limit);
+		  printf ("\nStack Limit = %ld and %ld max\n", limit.rlim_cur, limit.rlim_max);
+*/
+		 ready_to_fuzz = 0;
+
+		//Extract last argv argument
+		inputFile = strdup(argv[argc-1]);
+		argc--;
+		//argv[argc] = 0;
+
+		sprintf( tmpStr, "%d", fd_inputFile );
+		if(setenv("fd_inputFile", tmpStr, 1) < 0){
+			fprintf(stderr, "error setting fd_inputFile envvar: %s\n", tmpStr);
+			exit(-1);
+		}
+
+		if(setenv("str_inputFile", inputFile, 1) < 0){
+			fprintf(stderr, "error setting str_inputFile envvar: %s\n", inputFile);
+			exit(-1);
+		}
+
+
+
+
 
     AP_MONCONTROL(0); /* turn off profiling of startup */
 
     process = init_process(&argc, &argv);
+
     ap_pglobal = process->pool;
     pconf = process->pconf;
     ap_server_argv0 = process->short_name;
@@ -543,6 +603,8 @@ static void usage(process_rec *process)
     }
 
     ap_run_rewrite_args(process);
+
+
 
     /* Maintain AP_SERVER_BASEARGS list in http_main.h to allow the MPM
      * to safely pass on our args from its rewrite_args() handler.
@@ -681,16 +743,18 @@ static void usage(process_rec *process)
     if (temp_error_log) {
         ap_replace_stderr_log(process->pool, temp_error_log);
     }
+
     ap_server_conf = ap_read_config(process, ptemp, confname, &ap_conftree);
     if (!ap_server_conf) {
         if (showcompile) {
-            /* Well, we tried. Show as much as we can, but exit nonzero to
-             * indicate that something's not right. The cause should have
-             * already been logged. */
+            // Well, we tried. Show as much as we can, but exit nonzero to
+             // indicate that something's not right. The cause should have
+             // already been logged.
             show_compile_settings();
         }
         destroy_and_exit_process(process, 1);
     }
+
     apr_pool_cleanup_register(pconf, &ap_server_conf, ap_pool_cleanup_set_null,
                               apr_pool_cleanup_null);
 
@@ -702,6 +766,7 @@ static void usage(process_rec *process)
     /* sort hooks here to make sure pre_config hooks are sorted properly */
     apr_hook_sort_all();
 
+
     if (ap_run_pre_config(pconf, plog, ptemp) != OK) {
         ap_log_error(APLOG_MARK, APLOG_STARTUP |APLOG_ERR, 0,
                      NULL, APLOGNO(00013) "Pre-configuration failed");
@@ -710,6 +775,7 @@ static void usage(process_rec *process)
 
     rv = ap_process_config_tree(ap_server_conf, ap_conftree,
                                 process->pconf, ptemp);
+
     if (rv == OK) {
         ap_fixup_virtual_hosts(pconf, ap_server_conf);
         ap_fini_vhost_config(pconf, ap_server_conf);
